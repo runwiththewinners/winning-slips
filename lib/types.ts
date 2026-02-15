@@ -1,6 +1,6 @@
 export interface WinningSlip {
   id: string;
-  imageData: string; // base64 image
+  imageData: string;
   pick: string;
   odds: string;
   sport: string;
@@ -12,6 +12,7 @@ export interface WinningSlip {
 }
 
 export interface UserAccess {
+  experienceId?: string;
   hasPremiumAccess: boolean;
   isAdmin: boolean;
   userId: string | null;

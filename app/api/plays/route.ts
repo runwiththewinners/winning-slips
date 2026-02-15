@@ -3,7 +3,6 @@ import { whopsdk } from "@/lib/whop-sdk";
 import { COMPANY_ID } from "@/lib/constants";
 import type { WinningSlip } from "@/lib/types";
 
-// In-memory store (replace with a database in production)
 let slips: WinningSlip[] = [];
 
 async function getUser(request: NextRequest): Promise<{
@@ -16,13 +15,9 @@ async function getUser(request: NextRequest): Promise<{
 
     let isAdmin = false;
     try {
-      const companyAccess = await whopsdk.users.checkAccess(COMPANY_ID, {
-        id: userId,
-      });
+      const companyAccess = await whopsdk.users.checkAccess(COMPANY_ID, { id: userId });
       isAdmin = companyAccess.access_level === "admin";
-    } catch {
-      isAdmin = false;
-    }
+    } catch { isAdmin = false; }
 
     return { userId, isAdmin };
   } catch {
@@ -30,24 +25,18 @@ async function getUser(request: NextRequest): Promise<{
   }
 }
 
-// GET /api/plays — everyone can see winning slips
 export async function GET(request: NextRequest) {
   const user = await getUser(request);
   if (!user.userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
   return NextResponse.json({ slips, isAdmin: user.isAdmin });
 }
 
-// POST /api/plays — admin only
 export async function POST(request: NextRequest) {
   const user = await getUser(request);
   if (!user.isAdmin) {
-    return NextResponse.json(
-      { error: "Admin access required" },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
   const body = await request.json();
@@ -60,15 +49,10 @@ export async function POST(request: NextRequest) {
     matchup: body.matchup,
     wager: body.wager,
     payout: body.payout,
-    postedAt:
-      new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "America/New_York",
-      }) + " ET",
+    postedAt: new Date().toLocaleString("en-US", {
+      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+      hour12: true, timeZone: "America/New_York",
+    }) + " ET",
     createdAt: Date.now(),
   };
 
@@ -76,14 +60,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ slip: newSlip, success: true });
 }
 
-// DELETE /api/plays — admin only
 export async function DELETE(request: NextRequest) {
   const user = await getUser(request);
   if (!user.isAdmin) {
-    return NextResponse.json(
-      { error: "Admin access required" },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
   const body = await request.json();

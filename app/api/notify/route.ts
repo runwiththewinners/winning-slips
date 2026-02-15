@@ -6,24 +6,15 @@ async function checkIsAdmin(request: NextRequest): Promise<boolean> {
   try {
     const { userId } = await whopsdk.verifyUserToken(request.headers);
     if (!userId) return false;
-
-    const access = await whopsdk.users.checkAccess(COMPANY_ID, {
-      id: userId,
-    });
+    const access = await whopsdk.users.checkAccess(COMPANY_ID, { id: userId });
     return access.access_level === "admin";
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-// POST /api/notify — send push notification to all users
 export async function POST(request: NextRequest) {
   const isAdmin = await checkIsAdmin(request);
   if (!isAdmin) {
-    return NextResponse.json(
-      { error: "Admin access required" },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
   const body = await request.json();
@@ -31,29 +22,24 @@ export async function POST(request: NextRequest) {
 
   try {
     let result;
-
     if (experienceId) {
       result = await whopsdk.notifications.create({
-        experience_id: experienceId,
-        title: `🔥 New Straight Bet — ${sport}`,
-        subtitle: "FlareGotLocks just dropped a play",
+        experience_id: experienceId as string,
+        title: `🏆 Winning Slip — ${sport}`,
+        subtitle: "FlareGotLocks just cashed!",
         content: `${team} (${odds}) — Check it now!`,
       });
     } else {
       result = await whopsdk.notifications.create({
-        company_id: companyId || COMPANY_ID,
-        title: `🔥 New Straight Bet — ${sport}`,
-        subtitle: "FlareGotLocks just dropped a play",
+        company_id: (companyId || COMPANY_ID) as string,
+        title: `🏆 Winning Slip — ${sport}`,
+        subtitle: "FlareGotLocks just cashed!",
         content: `${team} (${odds}) — Check it now!`,
       });
     }
-
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     console.error("Notification error:", error);
-    return NextResponse.json(
-      { error: "Failed to send notification", details: error?.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to send notification", details: error?.message }, { status: 500 });
   }
 }
